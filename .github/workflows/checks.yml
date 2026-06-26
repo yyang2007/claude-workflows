@@ -1,0 +1,37 @@
+name: Validation Checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-timeout
+
+      - name: P0 validation
+        run: python -m pytest tests/validate_p0.py tests/validate_p0_security.py tests/validate_p0_tools.py -v --tb=short --timeout=30
+
+      - name: P1 validation
+        run: python -m pytest tests/validate_p1.py tests/validate_p1_agent.py tests/validate_p1_context.py tests/validate_p1_prompt.py -v --tb=short --timeout=30
+
+      - name: Knowledge base validation
+        run: python -m pytest tests/validate_kb_p0_inject.py tests/validate_kb_p0_types.py tests/validate_kb_p1_ingest.py tests/validate_kb_p1_link.py tests/validate_kb_p2_lint.py -v --tb=short --timeout=60
+
+      - name: Pipeline validation
+        run: python -m pytest tests/validate_cl_p0_diagnosis.py tests/validate_cl_p0_errortypes.py tests/validate_cl_p1_modules.py tests/validate_cl_p1_scan.py tests/validate_cl_p2_pipeline.py tests/validate_cl_p2_plan.py tests/validate_orchestrator.py -v --tb=short --timeout=60
+
+      - name: Other checks
+        run: python -m pytest tests/validate_security.py tests/validate_verification.py tests/validate_config_priority.py tests/validate_cron.py -v --tb=short --timeout=30
